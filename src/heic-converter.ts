@@ -5,23 +5,19 @@ const fetchBlob = async (src: string): Promise<Blob> => (await fetch(src)).blob(
 
 const convertBlob = async (blob: Blob): Promise<Blob> => {
   const { default: heic2any } = await import("heic2any");
-  const newBlob = heic2any({ blob });
+  const newBlob = await heic2any({ blob });
 
   return Array.isArray(newBlob) ? newBlob[0] : newBlob;
 };
 
-const updateSrc = (el: HTMLImageElement, blob: Blob) => {
-  el.src = window.URL.createObjectURL(blob);
+const updateSrc = (img: HTMLImageElement, blob: Blob) => {
+  img.src = window.URL.createObjectURL(blob);
 };
 
 const convertHeicImages = async () =>
-  (
-    await Promise.all(
-      getImgs().map(
-        async (img): Promise<[HTMLImageElement, Blob]> => [img, await convertBlob(await fetchBlob(img.src))]
-      )
-    )
-  ).forEach(([el, blob]) => updateSrc(el, blob));
+  getImgs()
+    .map(async (img): Promise<[HTMLImageElement, Blob]> => [img, await convertBlob(await fetchBlob(img.src))])
+    .forEach(async (imgAndBlob) => updateSrc(...(await imgAndBlob)));
 
 addEventListener("DOMContentLoaded", convertHeicImages);
 
